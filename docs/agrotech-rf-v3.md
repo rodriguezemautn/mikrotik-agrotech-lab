@@ -3,9 +3,8 @@
 
 ### Autores
 
-**Emanuel**  
-**Del Vecchio Guillermo Andrés**  
-**Legajo N.º 27224**
+**Rodriguez Rodriguez Emanuel** Legajo 19288  
+**Del Vecchio Guillermo Andrés**  Legajo N.º 27224
 
 ---
 
