@@ -13,11 +13,11 @@
 
 ---
 
-## Resumen 
+## Resumen
 
-Este documento presenta el diseño, implementación y configuración de una infraestructura de red distribuida para una empresa agrotech de producción ganadera, utilizando radioenlaces MikroTik RB951ui-2HnD. La solución integra oficinas en La Plata y Magdalena mediante ISPs mayorista y minorista, con extensión por radioenlace propio al establecimiento de producción rural.
+Este documento detalla la arquitectura y configuración de una red de telecomunicaciones avanzada, diseñada a medida para una empresa de agrotecnología con operaciones distribuidas. El proyecto aborda el desafío de conectar sedes urbanas en La Plata y Magdalena con un centro de producción en una zona rural remota, garantizando una conectividad robusta y de alta disponibilidad. Mediante el uso estratégico de radioenlaces MikroTik, tecnologías de virtualización de redes (VLAN) y una arquitectura de seguridad multicapa, se establece un puente digital que extiende los servicios corporativos hasta el corazón de las operaciones de campo. La solución no solo resuelve la brecha de la última milla, sino que también sienta las bases para la implementación de tecnologías de Agricultura 4.0, como el monitoreo con drones, sensores IoT y análisis de datos en tiempo real.
 
-**Palabras clave:** Radioenlaces, MikroTik, VLAN, Seguridad de redes, Agrotech, ISP, Última milla
+**Palabras clave:** Radioenlaces, MikroTik, VLAN, Seguridad de redes, Agrotech, ISP, Última milla, Redes Rurales, Agricultura 4.0
 
 ---
 
@@ -51,21 +51,7 @@ El equipo ofrece soporte nativo de WDS, lo que permite el transporte transparent
 
 ### 1.5 Protocolos de Seguridad y Transporte
 
-#### 1.5.1 WDS (Wireless Distribution System)
-Sistema que permite interconectar múltiples puntos de acceso de forma transparente, manteniendo un dominio L2 único. Esencial para el transporte de VLANs sobre radioenlaces.
-
-#### 1.5.2 VLAN Tagging y Q-in-Q
-- **802.1Q:** Etiquetado simple de VLANs
-- **Q-in-Q:** Doble etiquetado para proveedores de servicios
-- **VLAN Filtering:** Control granular de forwarding por VLAN
-
-#### 1.5.3 Túneles EoIP
-Encapsulación de frames Ethernet completos sobre IP, permitiendo transporte de VLANs a través de redes IP heterogéneas.
-
-#### 1.5.4 Cifrado y Autenticación
-- **WPA2-PSK AES:** Cifrado robusto para enlaces inalámbricos
-- **IPSec:** Túneles seguros a nivel de red
-- **Certificados digitales:** PKI para autenticación mutua
+La arquitectura de la red se fundamenta en un conjunto de protocolos de seguridad y transporte diseñados para garantizar la integridad, confidencialidad y disponibilidad de los datos. Para la extensión transparente de la red a través de los radioenlaces, se utiliza el **Sistema de Distribución Inalámbrico (WDS)**, que mantiene un dominio de Capa 2 unificado, esencial para el correcto funcionamiento de las VLANs. La segmentación del tráfico se logra mediante el estándar **802.1Q (VLAN Tagging)**, permitiendo un control granular del reenvío de tramas. En escenarios de interconexión con proveedores de servicios, la solución está preparada para utilizar **Q-in-Q (VLAN Stacking)**. Como alternativa para el transporte de tráfico a través de redes IP heterogéneas, se contempla el uso de túneles **EoIP (Ethernet over IP)**, que encapsulan tramas Ethernet completas. La seguridad de los enlaces inalámbricos se robustece con cifrado **WPA2-PSK con AES**, mientras que la confidencialidad de los datos a nivel de red se asegura mediante túneles **IPSec**. Finalmente, la autenticación de los dispositivos se gestiona a través de una **infraestructura de clave pública (PKI)** con certificados digitales, garantizando que solo los equipos autorizados puedan formar parte de la red.
 
 ---
 
@@ -132,23 +118,13 @@ Servicios L3            Handoff Transparente                    Última Milla
 ### 3.2 Solución Arquitectónica Propuesta
 
 #### 3.2.1 Implementación de Frontera L2 Transparente
-**En Magdalena (Punto de Interconexión):**
-- **VLAN de Transporte:** Uso de VLAN 201 como trunk para todas las VLANs corporativas
-- **Q-in-Q Stacking:** Encapsulación de VLANs cliente (10,20,90,96,201) dentro de VLAN de proveedor
-- **EoIP Tunneling:** Túnel L2 sobre IP como alternativa para mayor seguridad
+En el punto de interconexión de Magdalena, se establece una frontera de Capa 2 transparente. Esto se logra mediante el uso de la **VLAN 201 como VLAN de transporte**, actuando como un trunk para todas las VLANs corporativas. Se contempla la implementación de **Q-in-Q Stacking** para encapsular las VLANs cliente (10, 20, 90, 96, 201) dentro de la VLAN del proveedor, asegurando la segregación del tráfico. Adicionalmente, se considera el **EoIP Tunneling** como una alternativa robusta para el transporte seguro de Capa 2 sobre redes IP, ofreciendo mayor flexibilidad y seguridad.
 
 #### 3.2.2 WDS para Radioenlaces Transparentes
-**Tecnología WDS (Wireless Distribution System):**
-- **Dominio L2 extendido:** Bridge transparente entre sitios
-- **VLAN-aware bridging:** Transporte múltiple de VLANs sobre radioenlace
-- **Redundancia:** Posibilidad de múltiples enlaces WDS
+La tecnología **Wireless Distribution System (WDS)** es fundamental para extender la red de forma transparente a través de los radioenlaces. WDS permite crear un **dominio de Capa 2 extendido**, funcionando como un bridge transparente entre los sitios remotos. Esto facilita el **VLAN-aware bridging**, posibilitando el transporte eficiente de múltiples VLANs sobre el mismo radioenlace. Además, la arquitectura permite la **posibilidad de implementar redundancia** mediante múltiples enlaces WDS, aumentando la disponibilidad y fiabilidad de la conexión.
 
 #### 3.2.3 Centralización de Servicios
-**Desde La Plata:**
-- **DHCP Server:** Pools centralizados para todas las ubicaciones
-- **DNS Resolución:** Servicios de nombres corporativos
-- **Firewall/NAT:** Políticas de seguridad centralizadas
-- **Gateway Internet:** Salida única controlada
+La gestión y provisión de servicios clave se centralizan en la sede de La Plata. Esto incluye la operación de un **servidor DHCP** con pools centralizados para todas las ubicaciones, garantizando una asignación de direcciones IP consistente. La **resolución DNS** corporativa también se gestiona desde La Plata, asegurando la coherencia en los servicios de nombres. Las **políticas de seguridad centralizadas** se aplican a través de un Firewall/NAT, proporcionando un control unificado sobre el tráfico de red. Finalmente, se establece un **Gateway de Internet** único y controlado, optimizando la salida a la red externa y facilitando la auditoría de tráfico.
 
 ### 3.3 Flujo de Datos Propuesto
 
@@ -1589,12 +1565,7 @@ set enabled=yes contact="admin@agrotech.com" location="Campo A - AP Interior"
 
 #### B.1 Política de Seguridad General
 
-**Principios de Seguridad:**
-1. **Defensa en profundidad:** Múltiples capas de protección
-2. **Principio de menor privilegio:** Acceso mínimo necesario
-3. **Segregación de redes:** Aislamiento por función
-4. **Autenticación fuerte:** WPA2-Enterprise mínimo
-5. **Encriptación:** AES-256 para todos los enlaces
+La política de seguridad general se basa en un enfoque de **defensa en profundidad**, que establece múltiples capas de protección para salvaguardar la infraestructura de red. Se adhiere estrictamente al **principio de menor privilegio**, garantizando que los usuarios y sistemas solo tengan el acceso mínimo necesario para realizar sus funciones. La **segregación de redes** mediante VLANs aísla el tráfico por función, limitando la superficie de ataque. Se exige una **autenticación fuerte**, con un estándar mínimo de WPA2-Enterprise para el acceso a la red inalámbrica. Finalmente, se implementa la **encriptación AES-256** en todos los enlaces de comunicación para asegurar la confidencialidad e integridad de los datos en tránsito.
 
 #### B.2 Configuración de Certificados Digitales
 
@@ -2250,15 +2221,9 @@ Esta arquitectura es directamente aplicable a:
 
 ### Conclusión Final
 
-Este laboratorio demuestra que es técnica y económicamente viable implementar una red corporativa robusta en entornos rurales mediante la combinación inteligente de:
-- **Tecnología probada:** MikroTik RouterOS con equipos costo-efectivos
-- **Arquitecturas híbridas:** Integración ISP + radioenlaces propios
-- **Protocolos estándar:** WDS, 802.1Q, WPA2 para máxima compatibilidad
-- **Gestión centralizada:** Servicios unificados para simplicidad operacional
+En conclusión, este proyecto demuestra de manera concluyente la viabilidad técnica y económica de desplegar una red corporativa de alto rendimiento en entornos rurales. La clave del éxito radica en la combinación estratégica de tecnología probada y costo-efectiva como MikroTik RouterOS, arquitecturas de red híbridas que integran servicios de ISP con radioenlaces propios, y el uso de protocolos estándar como WDS, 802.1Q y WPA2 para garantizar la máxima compatibilidad y seguridad. La centralización de la gestión de servicios no solo simplifica la operación, sino que también reduce los costos y aumenta la eficiencia.
 
-La solución propuesta establecerá las bases tecnológicas para la transformación digital de la empresa agrotech, habilitando aplicaciones futuras de agricultura de precisión, análisis de datos con IA y automatización de procesos críticos.
-
-**El proyecto representa un caso de estudio replicable para la conectividad rural en Argentina y Latinoamérica, demostrando que la brecha digital puede cerrarse mediante soluciones de ingeniería apropiadas y costo-efectivas.**
+Esta solución no solo resuelve los desafíos de conectividad actuales de la empresa agrotech, sino que también sienta las bases para su transformación digital, permitiendo la adopción de tecnologías de agricultura de precisión, como el análisis de datos con IA y la automatización de procesos. Más allá de este caso de uso, el proyecto se erige como un modelo replicable para reducir la brecha digital en zonas rurales de Argentina y Latinoamérica, demostrando que con una ingeniería adecuada y soluciones costo-efectivas, es posible llevar la conectividad a donde más se necesita.
 
 ---
 
