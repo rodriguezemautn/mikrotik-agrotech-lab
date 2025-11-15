@@ -5,7 +5,7 @@
 # ====================================================================
 
 # MODIFICAR: name, address y location según el dispositivo (MK04, MK05, MK06)
-:local DEVICE_NAME "agrotech-cc-st"
+:local DEVICE_NAME "agrotech-ap-extra"
 :local DEVICE_IP "10.200.1.25/24"
 :local DEVICE_LOC "Extra AP Station"
 :local VLAN_ACCESS_PORT "ether4" 

@@ -1,6 +1,6 @@
 ether3 4C:5E:0C:AC:3A:F1 MK01 agrotech-lp-gw 10.200.1.1 oficina  matriz agrotech en La Plata
 ether3 d4:ca:6d:fc:52:9A MK02 agrotech-mg-ap 10.200.1.10 oficina regional agrotech en Magdalena zona ciudad
-E4:8D:8C:7C:40 SXT-MG 10.200.1.50 PtP desde oficina regional agrotech en Magdalena zona ciudad
+E4:8D:8C:82:7C:40 SXT-MG 10.200.1.50 PtP desde oficina regional agrotech en Magdalena zona ciudad
 D4:CA:6D:6D:F0:C3 SXT-CA 10.200.1.51  PtP desde  Casa de campo en Magdalena zona rural
 4C:5E:0C:31:71:DC MK03 agrotech-ca-ap 10.200.1.11 Casa de campo en Magdalena zona rural
 4C:5E:0C:31:21:84 Mk04 agrotech-cb-st 10.200.1.24 Centro de Drones en campo en Magdalena zona rural
