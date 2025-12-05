@@ -1,0 +1,233 @@
+# ============================================================================
+#                    INSTRUCCIONES DE MIGRACIÓN MK02
+#                         Agrotech Network Project
+# ============================================================================
+
+## RESUMEN DEL PROBLEMA ORIGINAL
+
+El MK02 no podía comunicarse con los equipos del campo (SXT-MG, SXT-CA, MK03, 
+etc.) debido a una configuración incorrecta del bridge.
+
+### Síntomas:
+- MK02 → MK01: OK ✓
+- MK02 → SXT-MG: FAIL ✗
+- MK02 → Campo: FAIL ✗
+- Campo interno: OK ✓
+
+### Causa Raíz:
+La configuración creaba interfaces VLAN sobre s-vlan-4000-in (ej: vlan10-extracted)
+y las agregaba a un bridge con vlan-filtering=yes. Esto causaba:
+
+1. Las VLANs se desencapsulaban al crearse sobre s-vlan-4000
+2. El tráfico llegaba al bridge SIN tags
+3. El bridge buscaba tags según su tabla VLAN
+4. El tráfico no coincidía → DESCARTADO
+
+### Solución:
+Bridgear directamente s-vlan-4000 con ether1-to-sxt, permitiendo que las
+C-VLANs pasen intactas sin desencapsulación intermedia.
+
+============================================================================
+
+## ARCHIVOS GENERADOS
+
+He creado 3 versiones del archivo de configuración:
+
+### 1. MK02-agrotech-mg-ap-v2.rsc (Completa)
+   - Configuración exhaustiva con todos los detalles
+   - Múltiples bridges para separar funciones
+   - Soporte completo para puertos locales (ether4/ether5)
+   - Scripts de diagnóstico detallados
+   - COMPLEJIDAD: Alta
+   - USO: Cuando se necesita máxima flexibilidad
+
+### 2. MK02-agrotech-mg-ap-v2.1-simple.rsc (Simplificada)
+   - Balance entre funcionalidad y simplicidad
+   - Tres bridges: transporte, acceso, unión
+   - Scripts de diagnóstico incluidos
+   - COMPLEJIDAD: Media
+   - USO: Recomendada para la mayoría de casos
+
+### 3. MK02-agrotech-mg-ap-v2.2-minimal.rsc (Minimalista) ⭐ RECOMENDADA
+   - Un solo bridge con vlan-filtering
+   - Configuración más limpia y fácil de mantener
+   - Menor uso de recursos
+   - COMPLEJIDAD: Baja
+   - USO: Mejor opción para producción
+
+============================================================================
+
+## PROCEDIMIENTO DE MIGRACIÓN
+
+### OPCIÓN A: Reset Completo (RECOMENDADO)
+
+Usar cuando se puede acceder físicamente al equipo.
+
+```
+PASO 1: Preparación
+- Copiar archivo .rsc a USB o tenerlo en PC
+- Conectar cable de red a ether3 del MK02
+- Conectar por Winbox a la IP actual (10.200.1.10)
+
+PASO 2: Backup
+/system backup save name=MK02-pre-migration
+/export file=MK02-pre-migration
+
+PASO 3: Reset
+/system reset-configuration no-defaults=yes skip-backup=yes
+(El equipo reiniciará, esperar 2-3 minutos)
+
+PASO 4: Reconexión
+- IP default después del reset: 192.168.88.1
+- Usuario: admin, sin contraseña
+- Conectar por Winbox
+
+PASO 5: Importar configuración
+/import file=MK02-agrotech-mg-ap-v2.2-minimal.rsc
+
+PASO 6: Verificar
+/system script run test
+```
+
+### OPCIÓN B: Migración en Caliente
+
+Usar cuando NO se puede perder conectividad con MK01.
+
+```
+PASO 1: Backup
+/system backup save name=MK02-pre-migration
+/export file=MK02-pre-migration
+
+PASO 2: Deshabilitar vlan-filtering temporalmente
+/interface bridge set BR-TRANSPORT vlan-filtering=no
+
+PASO 3: Remover configuración problemática
+/interface bridge port remove [find bridge=BR-TRANSPORT]
+/interface vlan remove [find where name~"extracted"]
+
+PASO 4: Verificar que s-vlan-4000-in existe
+/interface vlan print where name~"s-vlan"
+# Si no existe:
+/interface vlan add name=s-vlan-4000 interface=ether2-isp vlan-id=4000 mtu=1590
+
+PASO 5: Agregar puertos correctamente
+/interface bridge port add bridge=BR-TRANSPORT interface=s-vlan-4000
+/interface bridge port add bridge=BR-TRANSPORT interface=ether1-to-sxt
+
+PASO 6: Verificar conectividad
+/ping 10.200.1.1 count=3
+/ping 10.200.1.50 count=3
+
+PASO 7: Configurar gestión VLAN 999
+# (aplicar resto de configuración manualmente)
+```
+
+============================================================================
+
+## VERIFICACIÓN POST-MIGRACIÓN
+
+### Test Básico
+```
+/system script run test
+```
+Resultado esperado:
+```
+10.200.1.1: OK    (MK01)
+10.200.1.50: OK   (SXT-MG)
+10.200.1.20: OK   (MK03)
+```
+
+### Test Completo
+```
+:foreach t in={"10.200.1.1";"10.200.1.10";"10.200.1.50";"10.200.1.51";"10.200.1.20";"10.200.1.21";"10.200.1.22";"10.200.1.25"} do={:put ("$t: " . [/ping $t count=2])}
+```
+
+### Verificar Bridge
+```
+/interface bridge host print where bridge=BR-CORE
+```
+Debe mostrar MACs aprendidas de ambos lados (s-vlan-4000 y ether1-to-sxt)
+
+### Verificar Tráfico VLAN
+```
+/interface print stats where name~"s-vlan|ether1-to-sxt"
+```
+Debe mostrar TX y RX incrementando en ambas interfaces
+
+============================================================================
+
+## PRUEBA END-TO-END
+
+Una vez corregido MK02, realizar esta prueba:
+
+### En La Plata (MK01):
+1. Conectar PC en ether4-local (VLAN 10 untagged)
+2. La PC debe obtener IP 192.168.10.x via DHCP
+3. Gateway: 192.168.10.1
+
+### En Campo (MK03 o MK04):
+1. Conectar PC en ether4-servers (VLAN 10 untagged)
+2. La PC debe obtener IP 192.168.10.x via DHCP
+3. Gateway: 192.168.10.1
+
+### Test:
+```
+# Desde PC en La Plata:
+ping 192.168.10.x   (IP de PC en Campo)
+tracert 192.168.10.x
+
+# Desde PC en Campo:
+ping 192.168.10.x   (IP de PC en La Plata)
+tracert 192.168.10.x
+```
+
+El traceroute debe mostrar solo 1 salto (mismo dominio de broadcast L2).
+
+============================================================================
+
+## TROUBLESHOOTING
+
+### Problema: No hay ping a MK01 después de la migración
+
+Causa probable: ether2-isp no está conectado o s-vlan-4000 mal configurada
+```
+/interface print where name=ether2-isp
+/interface vlan print where name=s-vlan-4000
+/interface monitor-traffic s-vlan-4000 once
+```
+
+### Problema: Hay ping a MK01 pero no a SXT-MG
+
+Causa probable: ether1-to-sxt desconectado o enlace PTP caído
+```
+/interface ethernet monitor ether1-to-sxt once
+/ping 10.200.1.50 src-address=10.200.1.10
+```
+
+### Problema: SXT-MG OK pero Campo no responde
+
+Causa probable: Enlace PTP wireless caído
+```
+# En SXT-MG:
+/interface wireless registration-table print
+# Debe mostrar SXT-CA registrado
+```
+
+### Problema: No hay MACs en el bridge
+
+Causa probable: vlan-filtering está bloqueando
+```
+/interface bridge print where name=BR-CORE
+# Verificar vlan-filtering=yes y que la tabla VLAN esté correcta
+/interface bridge vlan print where bridge=BR-CORE
+```
+
+============================================================================
+
+## CONTACTO Y SOPORTE
+
+Email: protocolosinlambrica@gmail.com
+Proyecto: Agrotech Network Infrastructure
+Fecha: Diciembre 2025
+
+============================================================================
