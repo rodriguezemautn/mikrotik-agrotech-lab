@@ -19,6 +19,16 @@ Este documento detalla la arquitectura y configuración de una red de telecomuni
 
 **Palabras clave:** Radioenlaces, MikroTik, VLAN, Seguridad de redes, Agrotech, ISP, Última milla, Redes Rurales, Agricultura 4.0
 
+
+---
+
+![Diagrama_imagen](topologia_agrotech.051225.png)
+
+![Implementacion_imagen](implementacion.jpeg)
+
+![WinBox_Imagen](winBox_implementacion.jpeg)
+
+![ping_imagen](ping_full.jpeg)
 ---
 
 ## 1. Marco Teórico
